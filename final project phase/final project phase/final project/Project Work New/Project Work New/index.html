@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GAN Image Generator</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="fas fa-sun" id="theme-icon"></i>
+      </button>
+      <div class="logo-container">
+        <div class="logo-icon"><i class="fas fa-paint-brush"></i></div>
+        <h1>GAN Image Generator</h1>
+      </div>
+      <p class="tagline">
+        Generate image quality using Generative Adversarial Networks (GANs)
+      </p>
+    </header>
+
+    <nav>
+      <ul>
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <section class="generation-controls">
+        <h2><i class="fas fa-cog"></i> Image Generation Controls</h2>
+        <div class="buttons">
+          <button id="improve-image" class="primary-btn">
+            <i class="fas fa-magic"></i> Generate Image
+          </button>
+          <button id="save-image" class="secondary-btn">
+            <i class="fas fa-save"></i> Save Image
+          </button>
+          <button id="reset" class="tertiary-btn">
+            <i class="fas fa-redo"></i> Reset
+          </button>
+          <button id="load-test-results" class="secondary-btn">
+            <i class="fas fa-chart-line"></i> Show Graph and Charts
+          </button>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="generation-progress"></div>
+        </div>
+        <div class="status-message" id="input-status">
+          Click on the input box to upload an image or generate from noise
+        </div>
+      </section>
+
+      <!-- Input and Output Images Section -->
+      <section class="image-comparison">
+        <div class="image-box" id="input-image-box">
+          <h3><i class="fas fa-upload"></i> Input Image</h3>
+          <div class="image-container">
+            <img id="input-image" alt="Input" style="display: none" />
+            <div id="input-image-placeholder" class="image-placeholder">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to upload or drag & drop</p>
+              <span>Or generate from random noise</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-box" id="output-image-box">
+          <h3><i class="fas fa-image"></i> Generated Image</h3>
+          <div class="image-container">
+            <img id="output-image" alt="Generated" style="display: none" />
+            <div id="output-image-placeholder" class="image-placeholder">
+              <i class="fas fa-magic"></i>
+              <p>Generated image will appear here</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Training Section -->
+      <section class="training-section" id="training-section" style="display: none;">
+        <h3><i class="fas fa-graduation-cap"></i> Training Progress</h3>
+        <p class="training-note">
+          Training the GAN model on the generated image to improve quality
+        </p>
+        <div class="training-info">
+          <div class="training-stat">
+            <span class="stat-label">Current Epoch:</span>
+            <span class="stat-value" id="current-epoch">0</span>
+          </div>
+          <div class="training-stat">
+            <span class="stat-label">Total Epochs:</span>
+            <span class="stat-value" id="total-epochs">100</span>
+          </div>
+          <div class="training-stat">
+            <span class="stat-label">Generator Loss:</span>
+            <span class="stat-value" id="gen-loss">—</span>
+          </div>
+          <div class="training-stat">
+            <span class="stat-label">Discriminator Loss:</span>
+            <span class="stat-value" id="disc-loss">—</span>
+          </div>
+        </div>
+        <div class="training-progress-container">
+          <div class="training-progress-bar" id="training-progress"></div>
+        </div>
+        <div class="training-status" id="training-status">Ready to train</div>
+        <div class="training-actions">
+          <button id="start-training" class="primary-btn">
+            <i class="fas fa-play"></i> Start Training
+          </button>
+          <button id="stop-training" class="tertiary-btn" style="display: none;">
+            <i class="fas fa-stop"></i> Stop Training
+          </button>
+        </div>
+
+        <div class="loss-graph-container" style="margin-top: 1.25rem;">
+          <canvas id="training-loss-chart" style="max-height: 260px;"></canvas>
+        </div>
+      </section>
+
+      <!-- Testing Process Section -->
+      <section class="testing-section" id="testing-section" style="display: none;">
+        <h3><i class="fas fa-microscope"></i> Testing Process</h3>
+        <p class="testing-note">
+          Test the generated image quality using the discriminator network
+        </p>
+        <div class="testing-actions">
+          <button id="run-discriminator" class="primary-btn">
+            <i class="fas fa-vial"></i> Test Generated Image
+          </button>
+        </div>
+        <div class="testing-status" id="testing-status">Ready to test</div>
+      </section>
+
+      <!-- Discriminator Evaluation Results Section -->
+      <section class="discriminator-section" id="discriminator-results" style="display: none;">
+        <h3><i class="fas fa-brain"></i> Discriminator Evaluation Results</h3>
+        <p class="discriminator-note">
+          Quality assessment and realism score from the discriminator network
+        </p>
+        <div class="discriminator-single">
+          <div class="disc-card-single">
+            <h4>Generated Image Realism Score</h4>
+            <div class="disc-score-large" id="gen-disc-score">—</div>
+            <div class="disc-bar-large">
+              <div class="disc-bar-fill" id="gen-disc-bar" style="width: 0%"></div>
+            </div>
+            <div class="disc-verdict" id="gen-disc-verdict">Awaiting evaluation</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Generator and Discriminator Loss Graph Section -->
+      <section class="loss-graph-section" id="loss-graph-section" style="display: none;">
+        <h3><i class="fas fa-chart-line"></i> Generator & Discriminator Loss Analysis</h3>
+        <p class="loss-graph-description">Real-time loss metrics for the current image generation</p>
+        <div class="loss-graph-container">
+          <canvas id="evaluation-loss-chart" style="max-height: 300px;"></canvas>
+        </div>
+      </section>
+
+
+      <!-- Evaluation Metrics Summary Section -->
+      <section class="evaluation-metrics-section">
+        <h3><i class="fas fa-chart-bar"></i> Evaluation Metrics Summary</h3>
+        <p class="metrics-description">Comprehensive evaluation metrics for input and generated images</p>
+        
+        <div class="metrics-table-container">
+          <table class="metrics-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Generated Image</th>
+                <th>Input Image</th>
+                <th>Unit</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>PSNR Score</strong></td>
+                <td id="psnr-input">--</td>
+                <td id="psnr-generated">--</td>
+                <td>dB</td>
+                <td>Peak Signal-to-Noise Ratio - Higher values indicate better quality</td>
+              </tr>
+              <tr>
+                <td><strong>SSIM Score</strong></td>
+                <td id="ssim-input">--</td>
+                <td id="ssim-generated">--</td>
+                <td>Score</td>
+                <td>Structural Similarity Index - Measures structural similarity</td>
+              </tr>
+              <tr>
+                <td><strong>FID Score</strong></td>
+                <td id="fid-input">--</td>
+                <td id="fid-generated">--</td>
+                <td>Score</td>
+                <td>Fréchet Inception Distance - Lower values indicate better quality and similarity to real images</td>
+              </tr>
+              <tr>
+                <td><strong>Inception Score</strong></td>
+                <td id="inception-input">--</td>
+                <td id="inception-generated">--</td>
+                <td>Score</td>
+                <td>Image Quality and Diversity - Higher values indicate better quality</td>
+              </tr>
+              <tr>
+              <!--tr>
+                <td><strong>Validation Accuracy</strong></td>
+                <td id="validation-input">0.0</td>
+                <td id="validation-generated">0.0</td>
+                <td>%</td>
+                <td>Discriminator classification accuracy for real vs fake detection</td>
+              </tr>
+              
+                <td><strong>Noise Complexity</strong></td>
+                <td id="noise-input">--</td>
+                <td id="noise-generated">--</td>
+                <td>Dimensions</td>
+                <td>Complexity of noise patterns and variations in the image</td>
+              </!--tr-->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="metrics-summary">
+          <div class="summary-card">
+            <h4><i class="fas fa-info-circle"></i> Metric Interpretation</h4>
+            <ul>
+              <li><strong>Higher is Better:</strong> PSNR, SSIM, Inception Score</li>
+              <li><strong>Lower is Better:</strong> FID Score (measures distance from real image distribution)</li>
+              <li><strong>Context Dependent:</strong> Noise Complexity (varies by application)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="metrics">
+        <div class="metric-card">
+          <h4>Generation Time</h4>
+          <div class="metric-value" id="generation-time">0.0</div>
+          <div class="metric-unit">seconds</div>
+        </div>
+
+        <div class="metric-card">
+          <h4>Model Used</h4>
+          <div class="selected-model" id="selected-model-name">StyleGAN</div>
+          <div class="metric-unit">model</div>
+        </div>
+
+      </section>
+
+      <!-- Graphs Section (Loss & Discriminator Comparison) -->
+      <section class="graphs-section" id="graphs-section" style="display: none;">
+        <h3><i class="fas fa-chart-line"></i> Training & Evaluation Analysis</h3>
+        <p class="graphs-description">Loss curves and discriminator performance comparison</p>
+        
+        <div class="graphs-grid">
+          <div class="graph-card">
+            <h4><i class="fas fa-rocket"></i> Generator Confidence Comparison</h4>
+            <canvas id="generator-confidence-chart" style="max-height: 300px;"></canvas>
+          </div>
+          <div class="graph-card">
+            <h4><i class="fas fa-balance-scale"></i> Discriminator Confidence Comparison</h4>
+            <canvas id="discriminator-comparison-chart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accuracy Comparison Graphs -->
+      <!--section class="accuracy-graphs-section"-->
+        <!--h3><i class="fas fa-chart-bar"></i> Input vs Output Image Accuracy Analysis</!--h3>
+        <p class="graphs-description">Comprehensive accuracy comparison between input and generated images</p>
+        
+        <div class="accuracy-graphs-grid">
+          <div class="graph-card">
+            <h4><i class="fas fa-balance-scale"></i> Overall Accuracy Comparison</h4>
+            <canvas id="accuracy-comparison-chart"></canvas>
+          </div>
+          <div-- class="graph-card">
+            <h4><i class="fas fa-eye"></i> Discriminator Performance</h4>
+            <canvas id="discriminator-performance-chart"></canvas>
+          </div-->
+          <!--div class="graph-card">
+            <h4><i class="fas fa-chart-line"></i> Quality Metrics Comparison</h4>
+            <canvas id="quality-metrics-chart"></canvas>
+          </!--div>
+          <div class="graph-card">
+            <h4><i class="fas fa-trophy"></i> Performance Score Analysis</h4>
+            <canvas id="performance-score-chart"></canvas>
+          </div>
+        </div>
+        
+        <div-- class="graph-controls">
+          <button id="update-accuracy-graphs" class="primary-btn">
+            <i class="fas fa-sync-alt"></i> Update Accuracy Graphs
+          </button>
+          <button id="export-accuracy-data" class="secondary-btn">
+            <i class="fas fa-download"></i> Export Accuracy Data
+          </button>
+        </div-->
+      </!--section>
+
+      <section class="advanced-controls">
+        <h3><i class="fas fa-sliders-h"></i> Advanced Controls</h3>
+        <div class="control-group">
+          <label for="noise-dimension">Noise Dimension:</label>
+          <input
+            type="range"
+            id="noise-dimension"
+            min="64"
+            max="512"
+            value="128"
+            step="64"
+          />
+          <span id="noise-dimension-value">128</span>
+        </div>
+        <div class="control-group">
+          <label for="enhancement-level">Enhancement Level:</label>
+          <input
+            type="range"
+            id="enhancement-level"
+            min="1"
+            max="10"
+            value="5"
+          />
+          <span id="enhancement-level-value">5</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>GAN Image Generator &copy; 2023 | Powered by TensorFlow.js</p>
+      <div class="social-links">
+        <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+      </div>
+    </footer>
+
+    <div id="image-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <img id="modal-image" src="" alt="Full size image" />
+        <div class="modal-info">
+          <h3 id="modal-title">Generated Image</h3>
+          <p id="modal-details">Click outside or press ESC to close</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <script src="script.js"></script>
+  </body>
+  <style>
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(
+        90deg,
+        var(--primary-color),
+        var(--secondary-color)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+      text-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
+        0 0 40px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.2);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
+          0 0 40px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.2);
+      }
+      to {
+        text-shadow: 0 0 30px rgba(99, 102, 241, 0.8),
+          0 0 50px rgba(99, 102, 241, 0.6), 0 0 70px rgba(99, 102, 241, 0.4);
+      }
+    }
+
+    [data-theme="light"] h1 {
+      text-shadow: 0 0 15px rgba(99, 102, 241, 0.4),
+        0 0 30px rgba(99, 102, 241, 0.2), 0 0 45px rgba(99, 102, 241, 0.1);
+    }
+
+    [data-theme="light"] h1 {
+      text-shadow: 0 0 15px rgba(99, 102, 241, 0.4),
+        0 0 30px rgba(99, 102, 241, 0.2), 0 0 45px rgba(99, 102, 241, 0.1);
+      animation: glow-light 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow-light {
+      from {
+        text-shadow: 0 0 15px rgba(99, 102, 241, 0.4),
+          0 0 30px rgba(99, 102, 241, 0.2), 0 0 45px rgba(99, 102, 241, 0.1);
+      }
+      to {
+        text-shadow: 0 0 25px rgba(99, 102, 241, 0.6),
+          0 0 40px rgba(99, 102, 241, 0.4), 0 0 55px rgba(99, 102, 241, 0.3);
+      }
+    }
+
+    .tagline {
+      color: var(--text-dim);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    [data-theme="light"] .control-group input[type="range"] {
+      background-color: #000000;
+    }
+
+    [data-theme="light"]
+      .control-group
+      input[type="range"]::-webkit-slider-thumb {
+      background: #000000;
+    }
+
+    /* Update metrics grid for 2 columns */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 120px;
+    }
+
+    .metric-card h4 {
+      font-size: 1.2rem !important;
+      font-weight: 500 !important;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+      font-size: 2.2rem !important;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .selected-model {
+      font-size: 2.2rem !important;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-unit {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    /* Responsive design for metric cards */
+    @media (max-width: 768px) {
+      .metrics {
+        grid-template-columns: 1fr !important;
+        max-width: 400px;
+      }
+    }
+
+    /* Discriminator styles */
+    .discriminator-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .discriminator-section h3 { margin-top: 0; }
+    .discriminator-note { color: var(--text-dim); margin-bottom: 1.5rem; }
+    .discriminator-single { display: flex; justify-content: center; }
+    .disc-card-single { 
+      padding: 2rem; 
+      border: 2px solid var(--primary-color, rgba(99, 102, 241, 0.3)); 
+      border-radius: 12px; 
+      background: rgba(99, 102, 241, 0.05);
+      text-align: center;
+      min-width: 400px;
+      max-width: 600px;
+    }
+    .disc-card-single h4 { 
+      margin-top: 0; 
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    .disc-score-large { 
+      font-size: 3.5rem; 
+      font-weight: 700; 
+      margin: 1rem 0;
+      color: var(--primary-color);
+    }
+    .disc-bar-large { 
+      width: 100%; 
+      height: 20px; 
+      background: rgba(127,127,127,0.2); 
+      border-radius: 999px; 
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .disc-bar-fill { 
+      height: 100%; 
+      background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e); 
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    }
+    .disc-verdict-large { 
+      font-size: 1.1rem; 
+      color: var(--text-color); 
+      margin-top: 1rem;
+      font-weight: 500;
+    }
+    .disc-actions { 
+      margin-top: 1.5rem; 
+      display: flex; 
+      justify-content: center;
+      gap: 0.75rem; 
+    }
+    @media (max-width: 768px) {
+      .disc-card-single { 
+        min-width: 100%;
+        padding: 1.5rem;
+      }
+      .disc-score-large { font-size: 2.5rem; }
+    }
+
+    /* Simple Training and Testing Section Styles */
+    .training-section, .testing-section {
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .training-section h3, .testing-section h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    .training-note, .testing-note {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      text-align: center;
+      font-style: italic;
+    }
+    .training-controls, .testing-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    /* Accuracy Graphs Section Styles */
+    .accuracy-graphs-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .accuracy-graphs-section h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    .graphs-description {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+    }
+    .accuracy-graphs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .graph-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+      border-radius: 10px;
+      padding: 1.5rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .graph-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .graph-card h4 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .graph-card canvas {
+      width: 100% !important;
+      height: 250px !important;
+      max-height: 250px;
+    }
+    .graph-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 968px) {
+      .accuracy-graphs-grid {
+        grid-template-columns: 1fr;
+      }
+      .graph-card canvas {
+        height: 200px !important;
+      }
+    }
+
+    /* Evaluation Metrics Table Styles */
+    .evaluation-metrics-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .evaluation-metrics-section h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    .metrics-description {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+    }
+    .metrics-table-container {
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+    }
+    .metrics-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0,0,0,0.2);
+      font-size: 0.95rem;
+    }
+    .metrics-table th {
+      background: var(--primary-color, #6366f1);
+      color: white;
+      padding: 12px 10px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-color, rgba(255,255,255,0.2));
+    }
+    .metrics-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      color: var(--text-color);
+      vertical-align: middle;
+    }
+    .metrics-table tr:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+    .metrics-table td:nth-child(2),
+    .metrics-table td:nth-child(3) {
+      font-weight: 600;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .metrics-table td:nth-child(2) {
+      color: #22c55e;
+    }
+    .metrics-table td:nth-child(3) {
+      color: #f59e0b;
+    }
+    /* FID Score styling - highlight lower values as better */
+    .metrics-table tr:has(td:first-child:contains("FID")) td:nth-child(2),
+    .metrics-table tr:has(td:first-child:contains("FID")) td:nth-child(3) {
+      font-weight: 600;
+    }
+    .metrics-table td strong {
+      color: var(--primary-color, #6366f1);
+    }
+    .metrics-summary {
+      display: flex;
+      justify-content: center;
+    }
+    .summary-card {
+      background: rgba(0,0,0,0.2);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+      max-width: 600px;
+    }
+    .summary-card h4 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      color: var(--text-color);
+    }
+    .summary-card ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    .summary-card li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    .summary-card strong {
+      color: var(--primary-color, #6366f1);
+    }
+    @media (max-width: 768px) {
+      .metrics-table {
+        font-size: 0.85rem;
+      }
+      .metrics-table th,
+      .metrics-table td {
+        padding: 8px 6px;
+      }
+      .metrics-table td:nth-child(2),
+      .metrics-table td:nth-child(3) {
+        font-size: 0.9rem;
+      }
+      .summary-card {
+        padding: 1rem;
+      }
+    }
+
+    /* Graphs Section Styles */
+    .graphs-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .graphs-section h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    .graphs-description {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+    }
+    .graphs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .graph-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+      border-radius: 10px;
+      padding: 1.5rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .graph-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .graph-card h4 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .graph-card canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+    @media (max-width: 968px) {
+      .graphs-grid {
+        grid-template-columns: 1fr;
+      }
+      .graph-card canvas {
+        height: 250px !important;
+      }
+    }
+
+    /* Loss Graph Section Styles */
+    .loss-graph-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+      border-radius: 12px;
+      background: var(--panel-bg, rgba(255,255,255,0.02));
+    }
+    .loss-graph-section h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    .loss-graph-description {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+    }
+    .loss-graph-container {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+      border-radius: 10px;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .loss-graph-container canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+    @media (max-width: 768px) {
+      .loss-graph-container {
+        padding: 1rem;
+      }
+      .loss-graph-container canvas {
+        height: 200px !important;
+      }
+    }
+  </style>
+</html>

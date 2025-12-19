@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | GAN Image Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.2);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.2);
+            }
+            to {
+                text-shadow: 0 0 30px rgba(99, 102, 241, 0.8), 0 0 50px rgba(99, 102, 241, 0.6), 0 0 70px rgba(99, 102, 241, 0.4);
+            }
+        }
+        
+        [data-theme='light'] h1 {
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.4), 0 0 30px rgba(99, 102, 241, 0.2), 0 0 45px rgba(99, 102, 241, 0.1);
+        }
+        
+        .tagline {
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+            <i class="fas fa-sun" id="theme-icon"></i>
+        </button>
+        <div class="logo-container">
+            <div class="logo-icon"><i class="fas fa-paint-brush"></i></div>
+            <h1>GAN Image Generator</h1>
+        </div>
+        <p class="tagline">Generate image quality using Generative Adversarial Networks (GANs)</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html" class="active">About</a></li>
+        </ul>
+    </nav>
+
+    <main class="about-page">
+        <section class="about-section">
+            <h2><i class="fas fa-info-circle"></i> About GAN Image Generator</h2>
+            <p>
+                GAN Image Generator enhances image resolution using advanced GAN architectures. Built with the 
+                goal of generating image quality for users, this application applies neural network models to sharpen and 
+                upscale input images, focusing on both detail and perceptual fidelity.
+            </p>
+            
+            <div class="about-cards">
+                <div class="about-card">
+                    <div class="about-card-icon"><i class="fas fa-cogs"></i></div>
+                    <h3>Technology</h3>
+                    <p>
+                        This application leverages Generative Adversarial Networks (GANs), a revolutionary deep learning architecture 
+                        that consists of two neural networks competing against each other: a Generator and a Discriminator.
+                    </p>
+                </div>
+                
+                <div class="about-card">
+                    <div class="about-card-icon"><i class="fas fa-lightbulb"></i></div>
+                    <h3>How It Works</h3>
+                    <p>
+                        The Generator creates images from random noise or enhances existing images, while the Discriminator 
+                        evaluates the quality of these images. Through this adversarial process, the Generator learns to 
+                        produce increasingly realistic and high-quality images.
+                    </p>
+                </div>
+                
+                <div class="about-card">
+                    <div class="about-card-icon"><i class="fas fa-tasks"></i></div>
+                    <h3>Features</h3>
+                    <p>
+                        Our application offers image enhancement, noise-to-image generation, customizable parameters, 
+                        and multiple GAN model options. Users can adjust noise dimensions and enhancement levels for 
+                        personalized results.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2><i class="fas fa-shield-alt"></i> Discriminator</h2>
+            <p>
+                The Discriminator is the adversary to the Generator in a GAN. It receives an image and outputs a probability
+                indicating how likely the image is to be <strong>real</strong> (from the data distribution) versus <strong>generated</strong>.
+                In this app, the Discriminator UI appears below the images and reports a <em>0–100% real</em> score and a verdict for:
+            </p>
+            <ul>
+                <li><strong>Input Image</strong> — helps contextualize baseline “realness”.</li>
+                <li><strong>Generated Image</strong> — evaluates whether the enhanced/synthesized result looks realistic.</li>
+            </ul>
+
+            <h3>How It Works Here</h3>
+            <p>
+                For an in-browser demo without a trained CNN, we implement a <em>pixel-level change detection discriminator</em> in
+                <code>script.js</code>'s <code>Discriminator.classifyImage()</code>. It performs two types of analysis:
+            </p>
+            
+            <h4>1. Comparative Analysis (Generated Images)</h4>
+            <p>When evaluating generated images, the discriminator compares them pixel-by-pixel against the input image to detect modifications:</p>
+            <ul>
+                <li><strong>Pixel Difference</strong> — measures RGB changes across all pixels (weighted 40%)</li>
+                <li><strong>Structural Change</strong> — detects luminance/contrast modifications (weighted 30%)</li>
+                <li><strong>Color Shift</strong> — identifies saturation and hue changes (weighted 20%)</li>
+                <li><strong>Artifact Detection</strong> — flags unnatural color spikes indicating processing (weighted 10%)</li>
+            </ul>
+            <p>
+                <strong>Key Feature:</strong> If pixel changes exceed 15%, the discriminator applies a strong penalty, classifying the image as 
+                <em>fake</em> with a confidence percentage. The more modifications detected, the higher the fake probability.
+            </p>
+
+            <h4>2. Intrinsic Quality Analysis (Input Images)</h4>
+            <p>For input images without reference, it analyzes inherent quality metrics:</p>
+            <ul>
+                <li><strong>Luminance variance</strong> — overall contrast/structure</li>
+                <li><strong>Edge density</strong> — via Sobel filter approximation</li>
+                <li><strong>Color saturation</strong> — proxy for natural color variation</li>
+            </ul>
+            <p>
+                These signals are combined into a probability (0–1), presented as a 0–100% real score or X% fake score. 
+                This mirrors the <em>decision function</em> of a real GAN Discriminator, demonstrating how GANs detect generated content.
+            </p>
+
+            <h3>UI Behavior</h3>
+            <ul>
+                <li><strong>Manual Evaluation</strong> — Press the "Run Discriminator" button to evaluate both input and generated images.</li>
+                <li><strong>On-Demand Analysis</strong> — The discriminator only runs when you explicitly trigger it, allowing you to control when classifications occur.</li>
+                <li><strong>Verdicts</strong> display:
+                    <ul>
+                        <li><em>Likely Real</em> (≥70% real) — minimal or no modifications detected</li>
+                        <li><em>Uncertain / Slightly Modified</em> (50-69% real) — some changes present</li>
+                        <li><em>Likely Fake (X% confidence)</em> (30-49% real) — significant modifications detected</li>
+                        <li><em>Fake (X% confidence)</em> (&lt;30% real) — extensive pixel-level changes identified</li>
+                    </ul>
+                </li>
+                <li><strong>Score Display</strong> — shows "X% Real" for real images or "X% Fake" (in red) for generated images classified as fake.</li>
+            </ul>
+
+            <h3>GAN Workflow Context</h3>
+            <p>
+                In a full GAN training loop, the Discriminator learns to distinguish real from fake images while the Generator learns
+                to fool it. Here, we simulate inference-time behavior only, demonstrating how a Discriminator provides feedback on
+                generated outputs without performing training in the browser.
+            </p>
+
+            <h3>Confusion Matrix</h3>
+            <p>
+                The confusion matrix visualizes the discriminator's classification performance, showing how accurately it distinguishes
+                between real (input) and fake (generated) images. Based on GAN evaluation methodology from the research paper, it tracks:
+            </p>
+            <ul>
+                <li><strong>True Positive (TP)</strong> — Real images correctly classified as Real (input image scores ≥50%)</li>
+                <li><strong>False Negative (FN)</strong> — Real images incorrectly classified as Fake (input image scores &lt;50%, happens with poor quality or unusual images)</li>
+                <li><strong>False Positive (FP)</strong> — Fake images incorrectly classified as Real (generated image scores ≥50%, happens when output looks very realistic)</li>
+                <li><strong>True Negative (TN)</strong> — Fake images correctly classified as Fake (generated image scores &lt;50%)</li>
+            </ul>
+            
+            <p class="matrix-note-detail">
+                <strong>Note:</strong> False Negatives occur when the discriminator is too strict and rejects even real images. 
+                This can happen with low-quality input images, heavily compressed photos, or images with unusual characteristics. 
+                False Positives occur when the generator produces very high-quality outputs that fool the discriminator.
+            </p>
+            
+            <h4>Derived Metrics</h4>
+            <ul>
+                <li><strong>Accuracy</strong> = (TP + TN) / Total — Overall correctness of classifications</li>
+                <li><strong>Precision</strong> = TP / (TP + FP) — Accuracy of positive predictions</li>
+                <li><strong>Recall (Sensitivity)</strong> = TP / (TP + FN) — Ability to find all real images</li>
+                <li><strong>F1-Score</strong> = 2 × (Precision × Recall) / (Precision + Recall) — Harmonic mean of precision and recall</li>
+            </ul>
+            
+            <p>
+                The matrix updates in real-time as you load input images and generate outputs. A threshold of 50% probability is used:
+                images with ≥50% "real" score are classified as Real, otherwise as Fake. This provides quantitative evaluation of the
+                discriminator's performance across multiple image pairs.
+            </p>
+        </section>
+        
+        <section class="about-section">
+            <h2><i class="fas fa-code"></i> Technical Implementation</h2>
+            
+            <div class="implementation-details">
+                <div class="flowchart-section">
+                    <h3>GAN Training Process</h3>
+                    <div class="process-steps">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Initialize Networks</h4>
+                                <p>Set up Generator and Discriminator neural networks with initial weights</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Sample Noise</h4>
+                                <p>Generate random noise vectors as input for the Generator</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Generate Images</h4>
+                                <p>Create synthetic images from noise using the Generator</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h4>Discriminator Training</h4>
+                                <p>Train the Discriminator to distinguish between real and generated images</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h4>Generator Training</h4>
+                                <p>Train the Generator to produce images that can fool the Discriminator</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step">
+                            <div class="step-number">6</div>
+                            <div class="step-content">
+                                <h4>Iterative Improvement</h4>
+                                <p>Repeat the process until the Generator produces high-quality images</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="architecture-section">
+                    <h3>GAN Architecture</h3>
+                    <div class="architecture-diagram">
+                        <div class="architecture-component generator">
+                            <h4>Generator</h4>
+                            <ul>
+                                <li><i class="fas fa-random"></i> Noise Vector Input</li>
+                                <li><i class="fas fa-layer-group"></i> Multiple Neural Layers</li>
+                                <li><i class="fas fa-image"></i> Image Output</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="architecture-flow">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            <i class="fas fa-long-arrow-alt-left"></i>
+                        </div>
+                        
+                        <div class="architecture-component discriminator">
+                            <h4>Discriminator</h4>
+                            <ul>
+                                <li><i class="fas fa-image"></i> Image Input</li>
+                                <li><i class="fas fa-layer-group"></i> Multiple Neural Layers</li>
+                                <li><i class="fas fa-percentage"></i> Real/Fake Probability</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="about-section">
+            <h2><i class="fas fa-layer-group"></i> Technology Stack</h2>
+            
+            <p>
+                Our GAN Image Generator application is built using a modern technology stack that combines powerful machine learning capabilities with responsive web technologies.
+            </p>
+            
+            <div class="tech-stack">
+                <div class="tech-category">
+                    <h3><i class="fas fa-brain"></i> Machine Learning</h3>
+                    <ul class="tech-list">
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon">
+                                    <i class="fab fa-tensorflow" style="color: #ff6f00; margin-right: 8px;"></i>
+                                    <img src="https://www.tensorflow.org/images/tf_logo_social.png" alt="TensorFlow Logo" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">
+                                </div>
+                                <div class="tech-details">
+                                    <h4><i class="fab fa-tensorflow" style="color: #ff6f00; margin-right: 8px;"></i>TensorFlow.js</h4>
+                                    <p>Core ML framework for implementing and running GAN models directly in the browser</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fas fa-cube"></i></div>
+                                <div class="tech-details">
+                                    <h4>WebGL</h4>
+                                    <p>Hardware acceleration for neural network computations</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fas fa-paint-brush"></i></div>
+                                <div class="tech-details">
+                                    <h4>StyleGAN</h4>
+                                    <p>Advanced architecture with style modulation for high-quality image generation and enhancement</p>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="tech-category">
+                    <h3><i class="fas fa-code"></i> Frontend</h3>
+                    <ul class="tech-list">
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fab fa-html5"></i></div>
+                                <div class="tech-details">
+                                    <h4>HTML5</h4>
+                                    <p>Modern semantic markup for structured content</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fab fa-css3-alt"></i></div>
+                                <div class="tech-details">
+                                    <h4>CSS3</h4>
+                                    <p>Advanced styling with custom properties, flexbox, and grid layouts</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fab fa-js"></i></div>
+                                <div class="tech-details">
+                                    <h4>JavaScript (ES6+)</h4>
+                                    <p>Modern JavaScript for interactive UI and ML model integration</p>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tech-category">
+                    <h3><i class="fas fa-server"></i> Backend</h3>
+                    <ul class="tech-list">
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fab fa-python"></i></div>
+                                <div class="tech-details">
+                                    <h4>Python 3.8.10</h4>
+                                    <p>Core backend runtime for GAN model implementation and training</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fas fa-fire"></i></div>
+                                <div class="tech-details">
+                                    <h4>PyTorch</h4>
+                                    <p>Deep learning framework with torch.nn for neural networks and torch.optim for optimizers</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fas fa-calculator"></i></div>
+                                <div class="tech-details">
+                                    <h4>NumPy</h4>
+                                    <p>Numerical computing library for array operations and mathematical functions</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="tech-item">
+                                <div class="tech-icon"><i class="fas fa-terminal"></i></div>
+                                <div class="tech-details">
+                                    <h4>Argparse</h4>
+                                    <p>Command-line argument parsing for configurable model parameters</p>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2><i class="fas fa-rocket"></i> Training & Testing Guide</h2>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-terminal"></i> Quick Start</h3>
+                <p>Train and test the GAN model using the consolidated <code>stylegan.py</code> script:</p>
+                
+                <h4>Option 1: Run Everything (Extract + Train + Test)</h4>
+                <pre style="background: var(--card-bg); padding: 15px; border-radius: 8px; overflow-x: auto;">python stylegan.py --mode all --epochs 50</pre>
+                
+                <h4>Option 2: Run Step-by-Step</h4>
+                <pre style="background: var(--card-bg); padding: 15px; border-radius: 8px; overflow-x: auto;"># Extract datasets
+python stylegan.py --mode extract
+
+# Train model
+python stylegan.py --mode train --epochs 50
+
+# Test model
+python stylegan.py --mode test</pre>
+                
+                <h4>Customization Parameters</h4>
+                <ul style="list-style-type: none; padding-left: 0;">
+                    <li><code>--epochs 50</code> - Number of training epochs</li>
+                    <li><code>--batch_size 32</code> - Batch size for training</li>
+                    <li><code>--img_size 64</code> - Image resolution (64x64)</li>
+                    <li><code>--latent_dim 512</code> - Noise vector dimension</li>
+                    <li><code>--lr 0.0002</code> - Learning rate</li>
+                </ul>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-box"></i> Required Dependencies</h3>
+                <p>Install the following Python packages:</p>
+                <pre style="background: var(--card-bg); padding: 15px; border-radius: 8px; overflow-x: auto;">pip install torch torchvision numpy pillow matplotlib tqdm scikit-learn seaborn py7zr</pre>
+                
+                <h4>Package Versions</h4>
+                <ul>
+                    <li><strong>torch</strong> ≥2.0.0 - Deep learning framework</li>
+                    <li><strong>torchvision</strong> ≥0.15.0 - Image transformations & pre-trained models</li>
+                    <li><strong>numpy</strong> ≥1.24.0 - Numerical computing</li>
+                    <li><strong>pillow</strong> ≥9.5.0 - Image processing</li>
+                    <li><strong>matplotlib</strong> ≥3.7.0 - Visualization</li>
+                    <li><strong>tqdm</strong> ≥4.65.0 - Progress bars</li>
+                    <li><strong>scikit-learn</strong> ≥1.2.0 - Metrics</li>
+                    <li><strong>seaborn</strong> ≥0.12.0 - Statistical plots</li>
+                    <li><strong>py7zr</strong> ≥0.20.0 - 7z extraction</li>
+                </ul>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-brain"></i> Model Architecture</h3>
+                <p><strong>GAN-based Image Generation</strong></p>
+                <p>The system uses a custom GAN architecture for image generation and quality assessment:</p>
+                <ul>
+                    <li><strong>Generator:</strong> Deep convolutional network with upsampling layers</li>
+                    <li><strong>Discriminator:</strong> Convolutional network for real/fake classification</li>
+                    <li><strong>Training:</strong> Adversarial training on custom datasets</li>
+                    <li><strong>Input Size:</strong> 64×64 RGB images</li>
+                    <li><strong>Output:</strong> Enhanced images and quality metrics (SSIM, FID, IS, PSNR)</li>
+                    <li><strong>Evaluation:</strong> Confusion matrix with accuracy and precision metrics</li>
+                </ul>
+                <p><em>Note: The model is trained from scratch without using pre-trained weights.</em></p>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-folder-open"></i> Output Structure</h3>
+                <p>After running the pipeline, the following directories will be created:</p>
+                <ul>
+                    <li><strong>checkpoints/</strong> - Trained model weights (.pth files)</li>
+                    <li><strong>generated_samples/</strong> - Sample images during training</li>
+                    <li><strong>test_results/</strong> - Test evaluation results and metrics</li>
+                    <li><strong>data/cifar-10/train/</strong> - Extracted training images</li>
+                    <li><strong>data/cifar-10/test/</strong> - Extracted test images</li>
+                </ul>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Important Notes</h3>
+                <ul>
+                    <li><strong>GPU Recommended:</strong> Training on CPU is very slow (hours to days). Use CUDA-enabled GPU for best results.</li>
+                    <li><strong>Training Time:</strong> GPU: 1-3 hours | CPU: Several hours to days</li>
+                    <li><strong>Disk Space:</strong> Ensure ~2-3 GB free space for datasets and outputs</li>
+                    <li><strong>Monitoring:</strong> Watch D_loss and G_loss - they should stabilize during training</li>
+                </ul>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-wrench"></i> Troubleshooting</h3>
+                <ul>
+                    <li><strong>Out of Memory:</strong> Reduce batch size: <code>--batch_size 16</code></li>
+                    <li><strong>Training Too Slow:</strong> Use GPU or reduce epochs/image size</li>
+                    <li><strong>Extraction Fails:</strong> Install py7zr: <code>pip install py7zr</code></li>
+                    <li><strong>Models Not Found:</strong> Complete training first to generate checkpoints</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>GAN Image Generator &copy; 2023 | Powered by TensorFlow.js & PyTorch</p>
+        <div class="social-links">
+            <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+            <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

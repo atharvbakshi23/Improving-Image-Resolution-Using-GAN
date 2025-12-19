@@ -1,0 +1,14 @@
+# Machine Learning
+checkpoints/
+generated_samples/
+test_results/
+data/
+*.pth
+*.7z
+
+# Python
+__pycache__/
+venv/
+
+# OS
+.DS_Store
