@@ -17,5 +17,4 @@ using Generative Adversarial Networks (GANs).
 - Python (PyTorch - StyleGAN)
 - VS Code
 
-## Live Demo
-https://atharvbakshi23.github.io/Improving-Image-Resolution-Using-GAN/
+
